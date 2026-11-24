@@ -1,0 +1,6 @@
+# Firebase Android config
+google-services.json
+
+# Firebase Admin Service Account & Environment Variables
+*firebase-adminsdk*.json
+.env
