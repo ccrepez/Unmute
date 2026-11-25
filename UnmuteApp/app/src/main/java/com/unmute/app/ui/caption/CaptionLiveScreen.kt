@@ -25,6 +25,18 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -51,8 +63,17 @@ fun CaptionLiveScreen(
     viewModel: CaptionLiveViewModel = viewModel(key = sessionId) { CaptionLiveViewModel(sessionId) },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.questionMessage) {
+        state.questionMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.onQuestionMessageShown()
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 navigationIcon = {
@@ -109,6 +130,14 @@ fun CaptionLiveScreen(
 
             if (state.isEnded) {
                 SessionEndedBar(onOpenNotes)
+            } else {
+                QuestionInputBar(
+                    draft = state.questionDraft,
+                    canSend = state.canSendQuestion,
+                    isSending = state.isSendingQuestion,
+                    onDraftChange = viewModel::onQuestionChange,
+                    onSend = viewModel::submitQuestion,
+                )
             }
         }
     }
@@ -140,6 +169,46 @@ private fun CaptionParagraph(captions: List<Caption>, fontSizeSp: Int) {
 }
 
 private const val FOLLOW_THRESHOLD_PX = 48
+
+@Composable
+private fun QuestionInputBar(
+    draft: String,
+    canSend: Boolean,
+    isSending: Boolean,
+    onDraftChange: (String) -> Unit,
+    onSend: () -> Unit,
+) {
+    Surface(tonalElevation = 3.dp) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .imePadding()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            OutlinedTextField(
+                value = draft,
+                onValueChange = onDraftChange,
+                modifier = Modifier.weight(1f),
+                placeholder = { Text("Tulis pertanyaan untuk dosen…") },
+                maxLines = 3,
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Sentences,
+                    imeAction = ImeAction.Send,
+                ),
+                keyboardActions = KeyboardActions(onSend = { if (canSend) onSend() }),
+            )
+            Spacer(Modifier.width(8.dp))
+            if (isSending) {
+                CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+            } else {
+                IconButton(onClick = onSend, enabled = canSend) {
+                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Kirim pertanyaan")
+                }
+            }
+        }
+    }
+}
 
 @Composable
 private fun LiveBadge() {
