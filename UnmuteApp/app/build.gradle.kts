@@ -4,8 +4,6 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
-// Plugin Google Services hanya dipasang kalau google-services.json sudah ada,
-// supaya proyek tetap bisa di-build sebelum file itu dibagikan.
 if (file("google-services.json").exists()) {
     apply(plugin = libs.plugins.google.services.get().pluginId)
 }
@@ -22,7 +20,6 @@ android {
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
-        // 10.0.2.2 = localhost laptop dilihat dari emulator
         buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000/api/\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

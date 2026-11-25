@@ -35,8 +35,6 @@ class CaptionLiveViewModel(
     val uiState: StateFlow<CaptionLiveUiState> = _uiState.asStateFlow()
 
     init {
-        // Kedua listener hidup di viewModelScope, jadi otomatis dilepas
-        // saat mahasiswa keluar dari layar (ViewModel di-clear).
         viewModelScope.launch {
             repository.observeCaptions(sessionId)
                 .catch { e -> _uiState.update { it.copy(error = e.message) } }

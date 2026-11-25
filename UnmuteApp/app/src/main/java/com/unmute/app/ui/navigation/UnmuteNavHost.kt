@@ -9,11 +9,9 @@ import com.unmute.app.ui.caption.CaptionLiveScreen
 import com.unmute.app.ui.notes.LectureNotesScreen
 import kotlinx.serialization.Serializable
 
-/** Layar Caption Live. Minggu 1 memakai sesi "test"; nanti dibuka dari Halaman Kelas (Ina). */
 @Serializable
 data class CaptionLiveRoute(val sessionId: String)
 
-/** Layar Catatan Kuliah untuk sesi yang sudah ENDED. */
 @Serializable
 data class LectureNotesRoute(val sessionId: String)
 

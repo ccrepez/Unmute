@@ -2,7 +2,6 @@ package com.unmute.app.data.model
 
 import kotlinx.serialization.Serializable
 
-/** Balasan GET /api/sessions/:id/notes. */
 @Serializable
 data class SessionNotes(
     val title: String,

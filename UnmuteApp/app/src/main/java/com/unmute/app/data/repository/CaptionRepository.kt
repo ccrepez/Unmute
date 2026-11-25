@@ -11,11 +11,7 @@ import kotlinx.coroutines.flow.callbackFlow
 class CaptionRepository(
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance(),
 ) {
-    /**
-     * Listener real-time ke sessions/{id}/captions, urut berdasarkan seq.
-     * Snapshot pertama berisi semua caption lama (mahasiswa telat tetap bisa baca dari awal),
-     * selanjutnya Firebase hanya mengirim perubahan. Listener dilepas saat Flow berhenti dikumpulkan.
-     */
+
     fun observeCaptions(sessionId: String): Flow<List<Caption>> = callbackFlow {
         val registration = db.collection("sessions").document(sessionId)
             .collection("captions")
@@ -34,7 +30,6 @@ class CaptionRepository(
         awaitClose { registration.remove() }
     }
 
-    /** Listener ke dokumen sessions/{id} untuk mendeteksi status ENDED. */
     fun observeSession(sessionId: String): Flow<LiveSession?> = callbackFlow {
         val registration = db.collection("sessions").document(sessionId)
             .addSnapshotListener { snapshot, error ->

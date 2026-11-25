@@ -1,8 +1,5 @@
 import { Router } from "express";
 
-// Route milik Marsha. Minggu 1: masih data dummy.
-// Pasang di app.ts proyek Express (Ina) dengan: app.use("/api", notesRouter)
-// Minggu 2: ganti dengan query Prisma + middleware token dari Ina.
 const router = Router();
 
 router.get("/classrooms/:id/sessions", (_req, res) => {
