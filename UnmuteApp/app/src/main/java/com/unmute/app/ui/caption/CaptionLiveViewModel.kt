@@ -18,6 +18,13 @@ data class CaptionLiveUiState(
     val fontSizeSp: Int = DEFAULT_FONT_SP,
     val error: String? = null,
 ) {
+    val canDecreaseFont: Boolean get() = fontSizeSp > MIN_FONT_SP
+    val canIncreaseFont: Boolean get() = fontSizeSp < MAX_FONT_SP
+
+    fun withLargerFont() = copy(fontSizeSp = (fontSizeSp + FONT_STEP_SP).coerceAtMost(MAX_FONT_SP))
+
+    fun withSmallerFont() = copy(fontSizeSp = (fontSizeSp - FONT_STEP_SP).coerceAtLeast(MIN_FONT_SP))
+
     companion object {
         const val DEFAULT_FONT_SP = 18
         const val MIN_FONT_SP = 14
@@ -54,11 +61,7 @@ class CaptionLiveViewModel(
         }
     }
 
-    fun increaseFont() = _uiState.update {
-        it.copy(fontSizeSp = (it.fontSizeSp + CaptionLiveUiState.FONT_STEP_SP).coerceAtMost(CaptionLiveUiState.MAX_FONT_SP))
-    }
+    fun increaseFont() = _uiState.update { it.withLargerFont() }
 
-    fun decreaseFont() = _uiState.update {
-        it.copy(fontSizeSp = (it.fontSizeSp - CaptionLiveUiState.FONT_STEP_SP).coerceAtLeast(CaptionLiveUiState.MIN_FONT_SP))
-    }
+    fun decreaseFont() = _uiState.update { it.withSmallerFont() }
 }

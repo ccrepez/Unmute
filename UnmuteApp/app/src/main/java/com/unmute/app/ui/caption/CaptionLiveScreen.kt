@@ -1,6 +1,7 @@
 package com.unmute.app.ui.caption
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -31,6 +32,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -65,9 +68,19 @@ fun CaptionLiveScreen(
                     }
                 },
                 actions = {
-                    OutlinedButton(onClick = viewModel::decreaseFont, contentPadding = PaddingValues(8.dp)) { Text("A−") }
+                    OutlinedButton(
+                        onClick = viewModel::decreaseFont,
+                        enabled = state.canDecreaseFont,
+                        contentPadding = PaddingValues(8.dp),
+                        modifier = Modifier.semantics { contentDescription = "Perkecil huruf" },
+                    ) { Text("A−") }
                     Spacer(Modifier.width(4.dp))
-                    OutlinedButton(onClick = viewModel::increaseFont, contentPadding = PaddingValues(8.dp)) { Text("A+") }
+                    OutlinedButton(
+                        onClick = viewModel::increaseFont,
+                        enabled = state.canIncreaseFont,
+                        contentPadding = PaddingValues(8.dp),
+                        modifier = Modifier.semantics { contentDescription = "Perbesar huruf" },
+                    ) { Text("A+") }
                     Spacer(Modifier.width(8.dp))
                 },
             )
@@ -107,19 +120,26 @@ private fun CaptionParagraph(captions: List<Caption>, fontSizeSp: Int) {
     val paragraph = remember(captions) { captions.joinToString(" ") { it.text.trim() } }
 
     LaunchedEffect(paragraph, fontSizeSp) {
-        scrollState.animateScrollTo(scrollState.maxValue)
+        if (scrollState.value <= FOLLOW_THRESHOLD_PX) scrollState.animateScrollTo(0)
     }
 
-    Text(
-        paragraph,
-        fontSize = fontSizeSp.sp,
-        lineHeight = (fontSizeSp * 1.5).sp,
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(16.dp),
-    )
+            .verticalScroll(scrollState, reverseScrolling = true)
+            .padding(horizontal = 16.dp)
+            .padding(top = 16.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.Bottom,
+    ) {
+        Text(
+            paragraph,
+            fontSize = fontSizeSp.sp,
+            lineHeight = (fontSizeSp * 1.5).sp,
+        )
+    }
 }
+
+private const val FOLLOW_THRESHOLD_PX = 48
 
 @Composable
 private fun LiveBadge() {
