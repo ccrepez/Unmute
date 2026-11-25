@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  DOSEN
+  MAHASISWA
+}
+
+enum SessionStatus {
+  LIVE
+  ENDED
+}
+
+enum NoteStatus {
+  PROCESSING
+  READY
+  FAILED
+}
+
+model User {
+  id          String            @id @default(uuid())
+  name        String
+  email       String            @unique
+  firebaseUid String            @unique @map("firebase_uid")
+  role        Role
+  createdAt   DateTime          @default(now()) @map("created_at")
+  classrooms  Classroom[]       @relation("LecturerClassrooms")
+  enrollments Enrollment[]
+  questions   SessionQuestion[]
+
+  @@map("users")
+}
+
+model Classroom {
+  id          String       @id @default(uuid())
+  name        String
+  courseCode  String       @map("course_code")
+  joinCode    String       @unique @map("join_code")
+  lecturerId  String       @map("lecturer_id")
+  lecturer    User         @relation("LecturerClassrooms", fields: [lecturerId], references: [id])
+  enrollments Enrollment[]
+  sessions    Session[]
+
+  @@map("classrooms")
+}
+
+model Enrollment {
+  classroomId String    @map("classroom_id")
+  userId      String    @map("user_id")
+  joinedAt    DateTime  @default(now()) @map("joined_at")
+  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([classroomId, userId])
+  @@map("enrollments")
+}
+
+model Session {
+  id          String            @id @default(uuid())
+  classroomId String            @map("classroom_id")
+  title       String
+  status      SessionStatus     @default(LIVE)
+  startedAt   DateTime          @default(now()) @map("started_at")
+  endedAt     DateTime?         @map("ended_at")
+  classroom   Classroom         @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  note        SessionNote?
+  questions   SessionQuestion[]
+
+  @@map("sessions")
+}
+
+model SessionNote {
+  id         String     @id @default(uuid())
+  sessionId  String     @unique @map("session_id")
+  transcript String
+  summary    Json?
+  status     NoteStatus @default(PROCESSING)
+  createdAt  DateTime   @default(now()) @map("created_at")
+  session    Session    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("session_notes")
+}
+
+model SessionQuestion {
+  id         String   @id @default(uuid())
+  sessionId  String   @map("session_id")
+  studentId  String   @map("student_id")
+  text       String
+  isAnswered Boolean  @default(false) @map("is_answered")
+  createdAt  DateTime @map("created_at")
+  session    Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student    User     @relation(fields: [studentId], references: [id])
+
+  @@map("session_questions")
+}
