@@ -1,6 +1,10 @@
-# Firebase Android config
 google-services.json
 
-# Firebase Admin Service Account & Environment Variables
 *firebase-adminsdk*.json
 .env
+
+.idea/
+
+Unmute — Panduan Branch & Urutan Merge.pdf
+Unmute — Rincian Fitur per Anggota.pdf
+.DS_Store
