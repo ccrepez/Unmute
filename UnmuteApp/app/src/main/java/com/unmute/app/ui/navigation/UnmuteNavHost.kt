@@ -1,13 +1,29 @@
 package com.unmute.app.ui.navigation
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.unmute.app.ui.caption.CaptionLiveScreen
 import com.unmute.app.ui.notes.LectureNotesScreen
+import com.unmute.app.ui.speechtest.SpeechTestScreen
 import kotlinx.serialization.Serializable
+
+@Serializable
+data object DevMenuRoute
 
 @Serializable
 data class CaptionLiveRoute(val sessionId: String)
@@ -15,10 +31,19 @@ data class CaptionLiveRoute(val sessionId: String)
 @Serializable
 data class LectureNotesRoute(val sessionId: String)
 
+@Serializable
+data object SpeechTestRoute
+
 @Composable
 fun UnmuteNavHost() {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = CaptionLiveRoute("test")) {
+    NavHost(navController = navController, startDestination = DevMenuRoute) {
+        composable<DevMenuRoute> {
+            DevMenuScreen(
+                onSpeechTest = { navController.navigate(SpeechTestRoute) },
+                onStudent = { navController.navigate(CaptionLiveRoute("test")) },
+            )
+        }
         composable<CaptionLiveRoute> { entry ->
             val route = entry.toRoute<CaptionLiveRoute>()
             CaptionLiveScreen(
@@ -38,5 +63,23 @@ fun UnmuteNavHost() {
                 onBack = { navController.popBackStack() },
             )
         }
+        composable<SpeechTestRoute> {
+            SpeechTestScreen(onBack = { navController.popBackStack() })
+        }
+    }
+}
+
+@Composable
+private fun DevMenuScreen(onSpeechTest: () -> Unit, onStudent: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            .safeDrawingPadding()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text("Unmute (mode tes)", style = MaterialTheme.typography.headlineSmall)
+        Button(onClick = onSpeechTest, modifier = Modifier.fillMaxWidth()) { Text("Tes Pengenal Suara") }
+        OutlinedButton(onClick = onStudent, modifier = Modifier.fillMaxWidth()) { Text("Masuk sebagai Mahasiswa") }
     }
 }
