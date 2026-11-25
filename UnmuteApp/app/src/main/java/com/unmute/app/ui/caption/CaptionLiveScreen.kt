@@ -1,6 +1,7 @@
 package com.unmute.app.ui.caption
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -24,6 +25,18 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,6 +44,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,8 +63,17 @@ fun CaptionLiveScreen(
     viewModel: CaptionLiveViewModel = viewModel(key = sessionId) { CaptionLiveViewModel(sessionId) },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.questionMessage) {
+        state.questionMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.onQuestionMessageShown()
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 navigationIcon = {
@@ -65,9 +89,19 @@ fun CaptionLiveScreen(
                     }
                 },
                 actions = {
-                    OutlinedButton(onClick = viewModel::decreaseFont, contentPadding = PaddingValues(8.dp)) { Text("A−") }
+                    OutlinedButton(
+                        onClick = viewModel::decreaseFont,
+                        enabled = state.canDecreaseFont,
+                        contentPadding = PaddingValues(8.dp),
+                        modifier = Modifier.semantics { contentDescription = "Perkecil huruf" },
+                    ) { Text("A−") }
                     Spacer(Modifier.width(4.dp))
-                    OutlinedButton(onClick = viewModel::increaseFont, contentPadding = PaddingValues(8.dp)) { Text("A+") }
+                    OutlinedButton(
+                        onClick = viewModel::increaseFont,
+                        enabled = state.canIncreaseFont,
+                        contentPadding = PaddingValues(8.dp),
+                        modifier = Modifier.semantics { contentDescription = "Perbesar huruf" },
+                    ) { Text("A+") }
                     Spacer(Modifier.width(8.dp))
                 },
             )
@@ -96,6 +130,14 @@ fun CaptionLiveScreen(
 
             if (state.isEnded) {
                 SessionEndedBar(onOpenNotes)
+            } else {
+                QuestionInputBar(
+                    draft = state.questionDraft,
+                    canSend = state.canSendQuestion,
+                    isSending = state.isSendingQuestion,
+                    onDraftChange = viewModel::onQuestionChange,
+                    onSend = viewModel::submitQuestion,
+                )
             }
         }
     }
@@ -107,18 +149,65 @@ private fun CaptionParagraph(captions: List<Caption>, fontSizeSp: Int) {
     val paragraph = remember(captions) { captions.joinToString(" ") { it.text.trim() } }
 
     LaunchedEffect(paragraph, fontSizeSp) {
-        scrollState.animateScrollTo(scrollState.maxValue)
+        if (scrollState.value <= FOLLOW_THRESHOLD_PX) scrollState.animateScrollTo(0)
     }
 
-    Text(
-        paragraph,
-        fontSize = fontSizeSp.sp,
-        lineHeight = (fontSizeSp * 1.5).sp,
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(16.dp),
-    )
+            .verticalScroll(scrollState, reverseScrolling = true)
+            .padding(horizontal = 16.dp)
+            .padding(top = 16.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.Bottom,
+    ) {
+        Text(
+            paragraph,
+            fontSize = fontSizeSp.sp,
+            lineHeight = (fontSizeSp * 1.5).sp,
+        )
+    }
+}
+
+private const val FOLLOW_THRESHOLD_PX = 48
+
+@Composable
+private fun QuestionInputBar(
+    draft: String,
+    canSend: Boolean,
+    isSending: Boolean,
+    onDraftChange: (String) -> Unit,
+    onSend: () -> Unit,
+) {
+    Surface(tonalElevation = 3.dp) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .imePadding()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            OutlinedTextField(
+                value = draft,
+                onValueChange = onDraftChange,
+                modifier = Modifier.weight(1f),
+                placeholder = { Text("Tulis pertanyaan untuk dosen…") },
+                maxLines = 3,
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Sentences,
+                    imeAction = ImeAction.Send,
+                ),
+                keyboardActions = KeyboardActions(onSend = { if (canSend) onSend() }),
+            )
+            Spacer(Modifier.width(8.dp))
+            if (isSending) {
+                CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+            } else {
+                IconButton(onClick = onSend, enabled = canSend) {
+                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Kirim pertanyaan")
+                }
+            }
+        }
+    }
 }
 
 @Composable
