@@ -24,4 +24,5 @@ object RetrofitClient {
 
     val notesApi: NotesApiService = retrofit.create(NotesApiService::class.java)
     val userApi: UserApiService = retrofit.create(UserApiService::class.java)
+    val classroomApi: ClassroomApiService = retrofit.create(ClassroomApiService::class.java)
 }
