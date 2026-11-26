@@ -12,6 +12,7 @@ object RetrofitClient {
     private val json = Json { ignoreUnknownKeys = true }
 
     private val okHttpClient = OkHttpClient.Builder()
+        .addInterceptor(AuthInterceptor())
         .addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY })
         .build()
 
@@ -22,4 +23,5 @@ object RetrofitClient {
         .build()
 
     val notesApi: NotesApiService = retrofit.create(NotesApiService::class.java)
+    val userApi: UserApiService = retrofit.create(UserApiService::class.java)
 }
