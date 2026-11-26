@@ -11,16 +11,21 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.unmute.app.data.repository.CurrentUserStore
 import com.unmute.app.ui.auth.AccountStatusCard
 import com.unmute.app.ui.auth.LoginScreen
 import com.unmute.app.ui.auth.RegisterScreen
 import com.unmute.app.ui.caption.CaptionLiveScreen
+import com.unmute.app.ui.classroom.CreateClassroomScreen
+import com.unmute.app.ui.classroom.JoinClassroomScreen
 import com.unmute.app.ui.notes.LectureNotesScreen
 import com.unmute.app.ui.speechtest.SpeechTestScreen
 import kotlinx.serialization.Serializable
@@ -43,6 +48,12 @@ data object LoginRoute
 @Serializable
 data object RegisterRoute
 
+@Serializable
+data object CreateClassroomRoute
+
+@Serializable
+data object JoinClassroomRoute
+
 @Composable
 fun UnmuteNavHost() {
     val navController = rememberNavController()
@@ -52,6 +63,8 @@ fun UnmuteNavHost() {
                 onSpeechTest = { navController.navigate(SpeechTestRoute) },
                 onStudent = { navController.navigate(CaptionLiveRoute("test")) },
                 onLogin = { navController.navigate(LoginRoute) },
+                onCreateClassroom = { navController.navigate(CreateClassroomRoute) },
+                onJoinClassroom = { navController.navigate(JoinClassroomRoute) },
             )
         }
         composable<CaptionLiveRoute> { entry ->
@@ -89,6 +102,12 @@ fun UnmuteNavHost() {
                 onRegistered = { navController.popBackStack<DevMenuRoute>(inclusive = false) },
             )
         }
+        composable<CreateClassroomRoute> {
+            CreateClassroomScreen(onBack = { navController.popBackStack() })
+        }
+        composable<JoinClassroomRoute> {
+            JoinClassroomScreen(onBack = { navController.popBackStack() })
+        }
     }
 }
 
@@ -97,7 +116,11 @@ private fun DevMenuScreen(
     onSpeechTest: () -> Unit,
     onStudent: () -> Unit,
     onLogin: () -> Unit = {},
+    onCreateClassroom: () -> Unit = {},
+    onJoinClassroom: () -> Unit = {},
 ) {
+    val profile by CurrentUserStore.profile.collectAsStateWithLifecycle()
+
     Column(
         Modifier
             .fillMaxSize()
@@ -107,6 +130,11 @@ private fun DevMenuScreen(
     ) {
         Text("Unmute (mode tes)", style = MaterialTheme.typography.headlineSmall)
         AccountStatusCard(onLogin = onLogin)
+        if (profile?.isLecturer == true) {
+            Button(onClick = onCreateClassroom, modifier = Modifier.fillMaxWidth()) { Text("Buat Kelas") }
+        } else if (profile != null) {
+            Button(onClick = onJoinClassroom, modifier = Modifier.fillMaxWidth()) { Text("Gabung Kelas") }
+        }
         Button(onClick = onSpeechTest, modifier = Modifier.fillMaxWidth()) { Text("Tes Pengenal Suara") }
         OutlinedButton(onClick = onStudent, modifier = Modifier.fillMaxWidth()) { Text("Masuk sebagai Mahasiswa") }
     }
