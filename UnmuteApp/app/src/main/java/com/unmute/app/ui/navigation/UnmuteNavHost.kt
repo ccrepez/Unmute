@@ -17,6 +17,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.unmute.app.ui.auth.AccountStatusCard
+import com.unmute.app.ui.auth.LoginScreen
+import com.unmute.app.ui.auth.RegisterScreen
 import com.unmute.app.ui.caption.CaptionLiveScreen
 import com.unmute.app.ui.notes.LectureNotesScreen
 import com.unmute.app.ui.speechtest.SpeechTestScreen
@@ -34,6 +37,12 @@ data class LectureNotesRoute(val sessionId: String)
 @Serializable
 data object SpeechTestRoute
 
+@Serializable
+data object LoginRoute
+
+@Serializable
+data object RegisterRoute
+
 @Composable
 fun UnmuteNavHost() {
     val navController = rememberNavController()
@@ -42,6 +51,7 @@ fun UnmuteNavHost() {
             DevMenuScreen(
                 onSpeechTest = { navController.navigate(SpeechTestRoute) },
                 onStudent = { navController.navigate(CaptionLiveRoute("test")) },
+                onLogin = { navController.navigate(LoginRoute) },
             )
         }
         composable<CaptionLiveRoute> { entry ->
@@ -66,11 +76,28 @@ fun UnmuteNavHost() {
         composable<SpeechTestRoute> {
             SpeechTestScreen(onBack = { navController.popBackStack() })
         }
+        composable<LoginRoute> {
+            LoginScreen(
+                onBack = { navController.popBackStack() },
+                onLoggedIn = { navController.popBackStack<DevMenuRoute>(inclusive = false) },
+                onOpenRegister = { navController.navigate(RegisterRoute) },
+            )
+        }
+        composable<RegisterRoute> {
+            RegisterScreen(
+                onBack = { navController.popBackStack() },
+                onRegistered = { navController.popBackStack<DevMenuRoute>(inclusive = false) },
+            )
+        }
     }
 }
 
 @Composable
-private fun DevMenuScreen(onSpeechTest: () -> Unit, onStudent: () -> Unit) {
+private fun DevMenuScreen(
+    onSpeechTest: () -> Unit,
+    onStudent: () -> Unit,
+    onLogin: () -> Unit = {},
+) {
     Column(
         Modifier
             .fillMaxSize()
@@ -79,6 +106,7 @@ private fun DevMenuScreen(onSpeechTest: () -> Unit, onStudent: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text("Unmute (mode tes)", style = MaterialTheme.typography.headlineSmall)
+        AccountStatusCard(onLogin = onLogin)
         Button(onClick = onSpeechTest, modifier = Modifier.fillMaxWidth()) { Text("Tes Pengenal Suara") }
         OutlinedButton(onClick = onStudent, modifier = Modifier.fillMaxWidth()) { Text("Masuk sebagai Mahasiswa") }
     }
